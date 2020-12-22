@@ -1,21 +1,47 @@
-# Require TF version to most recent
+# Terraform state will be stored in S3
 terraform {
-  required_version = "=0.12.10"
+  backend "s3" {
+    bucket = "terraform-bucket-lokesh"
+    key    = "terraform.tfstate"
+    region = "ap-south-1"
+  }
 }
 
-# Download any stable version in AWS provider of 2.19.0 or higher in 2.19 train
+# Use AWS Terraform provider
 provider "aws" {
-  region  = "us-east-1"
-  version = "~> 2.19.0"
+  region = "ap-south-1"
 }
 
-# Call the seed_module to build our ADO seed info
-module "ado_seed" {
-  source                       = "./modules/ado_seed"
-  name_of_s3_bucket            = "s3-bucket-name-kyler-ue1-tfstate"
-  dynamo_db_table_name         = "aws-locks"
-  iam_user_name                = "AzureDevOpsIamUser"
-  ado_iam_role_name            = "AzureDevOpsIamRole"
-  aws_iam_policy_permits_name  = "AzureDevOpsIamPolicyPermits"
-  aws_iam_policy_assume_name   = "AzureDevOpsIamPolicyAssume"
+# Create EC2 instance
+resource "aws_instance" "default" {
+  ami                    = var.ami
+  count                  = var.instance_count
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.default.id]
+  source_dest_check      = false
+  instance_type          = var.instance_type
+
+  tags = {
+    Name = "terraform-default"
+  }
+}
+
+# Create Security Group for EC2
+resource "aws_security_group" "default" {
+  name = "terraform-default-sg"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 }
