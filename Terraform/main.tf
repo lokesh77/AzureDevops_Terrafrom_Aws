@@ -1,7 +1,7 @@
 # Terraform state will be stored in S3
 terraform {
   backend "s3" {
-    bucket = "terraform-bucket-lokesh"
+    bucket = "ado-terraform-bucket"
     key    = "terraform.tfstate"
     region = "ap-south-1"
   }
